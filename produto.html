@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Produto | Minha Loja</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="module" src="js/app.js" defer></script>
+  <script type="module">
+    import { PRODUTOS } from './js/data.js';
+    import { addToCart, moneyBR } from './js/app.js';
+    window.addEventListener('DOMContentLoaded', ()=>{
+      const params = new URLSearchParams(location.search);
+      const id = Number(params.get('id')||'0');
+      const p = PRODUTOS.find(x=>x.id===id) || PRODUTOS[0];
+      document.title = p.titulo + ' | Minha Loja';
+      document.getElementById('img').src = p.imagem;
+      document.getElementById('t').textContent = p.titulo;
+      document.getElementById('d').textContent = p.descricao;
+      document.getElementById('pr').textContent = moneyBR(p.preco);
+      document.getElementById('buy').onclick = ()=> addToCart(p.id,1);
+    });
+  </script>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="./"><span class="logo"></span><h1>Minha Loja</h1></a>
+      <div class="actions">
+        <a class="btn" href="carrinho.html">🛒 <span data-cart-count>0</span></a>
+        <a class="btn" href="checkout.html">💳 Checkout</a>
+      </div>
+    </div>
+  </nav>
+  <main class="container">
+    <div class="grid">
+      <div class="card"><img id="img" alt="Produto"/></div>
+      <div class="card">
+        <div class="content">
+          <h2 id="t"></h2>
+          <p id="d" class="small"></p>
+          <div class="price" id="pr"></div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button id="buy" class="btn primary">Adicionar ao Carrinho</button>
+            <a href="checkout.html" class="btn">Comprar agora</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

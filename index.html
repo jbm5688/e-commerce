@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loja | E-commerce estático</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%2322d3ee'/><stop offset='1' stop-color='%2310b981'/></linearGradient></defs><rect width='100' height='100' rx='18' fill='url(%23g)'/></svg>">
+  <script type="module" src="js/app.js" defer></script>
+  <script type="module">
+    import { PRODUTOS } from './js/data.js';
+    import { addToCart, moneyBR } from './js/app.js';
+    window.addEventListener('DOMContentLoaded', ()=>{
+      const grid = document.getElementById('grid');
+      grid.innerHTML = PRODUTOS.map(p=>`
+        <article class="card">
+          <img src="${p.imagem}" alt="${p.titulo}"/>
+          <div class="content">
+            <span class="badge">${p.destaque ? 'Destaque' : 'Novo'}</span>
+            <h3>${p.titulo}</h3>
+            <p class="small">${p.descricao}</p>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="price">${moneyBR(p.preco)}</span>
+              <div>
+                <a class="btn" href="produto.html?id=${p.id}">Ver</a>
+                <button class="btn primary" onclick="addToCart(${p.id},1)">Adicionar</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    });
+  </script>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="./"><span class="logo"></span><h1>Minha Loja</h1></a>
+      <div class="actions">
+        <a class="btn" href="carrinho.html">🛒 <span data-cart-count>0</span> itens</a>
+        <a class="btn" href="checkout.html">💳 Checkout</a>
+      </div>
+    </div>
+  </nav>
+  <main class="container">
+    <section class="hero">
+      <div>
+        <h2>Produtos selecionados para você</h2>
+        <p>Nenhum backend, 100% estático. Carrinho no navegador e pagamento via Pix (QR) + e-mail de confirmação.</p>
+      </div>
+      <div class="panel">
+        <ul class="small">
+          <li>✅ Hospede no GitHub Pages</li>
+          <li>✅ Carrinho com localStorage</li>
+          <li>✅ Checkout com Pix (copia e cola)</li>
+          <li>✅ Envio de pedido via EmailJS</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="grid" id="grid" aria-live="polite"></div>
+    </section>
+  </main>
+  <footer>© <span id="y"></span> Minha Loja — E-commerce estático para GitHub Pages</footer>
+  <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+</body>
+</html>

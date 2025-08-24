@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout | Minha Loja</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script type="module" src="js/app.js" defer></script>
+  <script type="module" src="js/pix.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js" defer></script>
+  <script defer>
+    document.addEventListener('DOMContentLoaded', function(){
+      emailjs.init(window.EMAILJS_PUBLIC_KEY||''); // set at runtime by inline script
+    });
+  </script>
+  <script type="module">
+    import { PRODUTOS } from './js/data.js';
+    import { getCart, cartTotal, moneyBR, saveCart } from './js/app.js';
+    import { emvPix, renderPixQR } from './js/pix.js';
+
+    const PIX_CHAVE = window.PIX_CHAVE || 'jbm5688@hotmail.com'; // personalize
+    const LOJA_NOME = 'Minha Loja';
+    const LOJA_CIDADE = 'Fortaleza';
+
+    function resumo(){
+      const cart = getCart();
+      const tbody = document.getElementById('tbody');
+      if(cart.length===0){ tbody.innerHTML = '<tr><td colspan=4 class="center small">Carrinho vazio</td></tr>'; }
+      else {
+        tbody.innerHTML = cart.map(i=>{
+          const p = PRODUTOS.find(x=>x.id===i.id);
+          return `<tr><td>${p.titulo}</td><td>${i.qty}</td><td>${moneyBR(p.preco)}</td><td>${moneyBR(p.preco*i.qty)}</td></tr>`;
+        }).join('');
+      }
+      document.getElementById('total').textContent = moneyBR(cartTotal());
+    }
+
+    function gerarPIX(){
+      const total = cartTotal();
+      const txid = 'PED' + Math.floor(100000+Math.random()*900000);
+      const payload = emvPix({chave:PIX_CHAVE, nome:LOJA_NOME, cidade:LOJA_CIDADE, valor: total, txid});
+      document.getElementById('payload').textContent = payload;
+      renderPixQR(document.getElementById('qrcode'), payload);
+      document.getElementById('txid').textContent = txid;
+      return {payload, txid, total};
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{
+      resumo();
+      const {payload, txid, total} = gerarPIX();
+      document.getElementById('copiar').onclick = ()=>{
+        navigator.clipboard.writeText(document.getElementById('payload').textContent);
+        document.getElementById('copied').textContent = 'Copiado!';
+        setTimeout(()=>document.getElementById('copied').textContent='', 1600);
+      };
+
+      document.getElementById('confirmar').onclick = async ()=>{
+        const nome = document.getElementById('nome').value.trim();
+        const email = document.getElementById('email').value.trim();
+        if(!nome || !email){ alert('Preencha nome e e-mail.'); return; }
+        const items = getCart().map(i=>{
+          const p = PRODUTOS.find(x=>x.id===i.id);
+          return `${p.titulo} x${i.qty} — ${moneyBR(p.preco*i.qty)}`;
+        }).join('\n');
+        try{
+          const templateParams = {
+            cliente_nome: nome,
+            cliente_email: email,
+            pedido_txid: txid,
+            pedido_total: moneyBR(total),
+            pedido_itens: items,
+            pix_payload: payload
+          };
+          await emailjs.send(window.EMAILJS_SERVICE_ID||'', window.EMAILJS_TEMPLATE_ID||'', templateParams, window.EMAILJS_PUBLIC_KEY||'');
+          alert('Pedido confirmado! Enviamos os detalhes para seu e-mail.');
+          saveCart([]);
+          location.href = 'index.html';
+        }catch(e){
+          console.error(e);
+          alert('Não foi possível enviar o e-mail agora. Verifique sua configuração do EmailJS.');
+        }
+      };
+    });
+  </script>
+  <script>
+    // >>> Personalize estes dados antes de publicar <<<
+    window.PIX_CHAVE = 'jbm5688@hotmail.com'; // sua chave Pix
+    window.EMAILJS_SERVICE_ID = 'service_p7luhzr'; // opcional
+    window.EMAILJS_TEMPLATE_ID = 'template_bscroiq'; // opcional
+    window.EMAILJS_PUBLIC_KEY = 'Y_b1YfPnGVmD1CptJ'; // opcional (pública)
+  </script>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="./"><span class="logo"></span><h1>Minha Loja</h1></a>
+      <div class="actions"><a class="btn" href="carrinho.html">🛒 Voltar ao carrinho</a></div>
+    </div>
+  </nav>
+  <main class="container">
+    <div class="hero">
+      <div class="panel">
+        <h2>Checkout</h2>
+        <p class="small">Revise seu pedido e finalize o pagamento via Pix.</p>
+        <table class="table">
+          <thead><tr><th>Item</th><th>Qtd</th><th>Preço</th><th>Subtotal</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px"><strong>Total: <span id="total">R$ 0,00</span></strong></div>
+        <hr style="border:0;border-top:1px solid #1f2937;margin:14px 0"/>
+        <div class="form-row">
+          <div><label>Nome completo</label><input id="nome" placeholder="Seu nome"/></div>
+          <div><label>E-mail</label><input id="email" placeholder="voce@exemplo.com"/></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Pagamento via Pix</h3>
+        <div id="qrcode" class="center" style="margin:8px auto;width:256px;height:256px"></div>
+        <div class="small">TXID: <strong id="txid"></strong></div>
+        <p class="small">Copia e cola Pix:</p>
+        <div class="copy" id="payload"></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+          <button class="btn" id="copiar">Copiar código</button><span id="copied" class="small"></span>
+          <button class="btn primary" id="confirmar">Confirmar Pedido</button>
+        </div>
+        <p class="small">Após o pagamento, clique em <em>Confirmar Pedido</em>. Você receberá o resumo por e-mail (EmailJS).</p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

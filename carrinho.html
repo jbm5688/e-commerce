@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carrinho | Minha Loja</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="module" src="js/app.js" defer></script>
+  <script type="module">
+    import { PRODUTOS } from './js/data.js';
+    import { getCart, saveCart, removeFromCart, updateQty, cartTotal, moneyBR } from './js/app.js';
+    window.addEventListener('DOMContentLoaded', ()=>{
+      render();
+      function render(){
+        const tbody = document.getElementById('tbody');
+        const cart = getCart();
+        if(cart.length===0){ tbody.innerHTML = '<tr><td colspan="5" class="center small">Carrinho vazio</td></tr>'; }
+        else {
+          tbody.innerHTML = cart.map(i=>{
+            const p = PRODUTOS.find(x=>x.id===i.id);
+            const subtotal = p.preco * i.qty;
+            return `<tr>
+              <td><img src="${p.imagem}" alt="${p.titulo}" style="width:64px;height:48px;object-fit:cover;border-radius:8px"/></td>
+              <td>${p.titulo}</td>
+              <td>${moneyBR(p.preco)}</td>
+              <td><div class="qty-control">
+                    <button class="btn" data-dec="${p.id}">-</button>
+                    <span>${i.qty}</span>
+                    <button class="btn" data-inc="${p.id}">+</button>
+                  </div></td>
+              <td>${moneyBR(subtotal)}</td>
+              <td><button class="btn" data-rem="${p.id}">Remover</button></td>
+            </tr>`;
+          }).join('');
+        }
+        document.getElementById('total').textContent = moneyBR(cartTotal());
+        tbody.querySelectorAll('button[data-dec]').forEach(b=> b.onclick = ()=>{ const id=Number(b.dataset.dec); const c=getCart(); const it=c.find(x=>x.id===id); if(it){it.qty=Math.max(1,it.qty-1); saveCart(c); render(); }} );
+        tbody.querySelectorAll('button[data-inc]').forEach(b=> b.onclick = ()=>{ const id=Number(b.dataset.inc); const c=getCart(); const it=c.find(x=>x.id===id); if(it){it.qty=it.qty+1; saveCart(c); render(); }} );
+        tbody.querySelectorAll('button[data-rem]').forEach(b=> b.onclick = ()=>{ removeFromCart(Number(b.dataset.rem)); render(); });
+      }
+    });
+  </script>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="./"><span class="logo"></span><h1>Minha Loja</h1></a>
+      <div class="actions">
+        <a class="btn" href="checkout.html">💳 Finalizar</a>
+      </div>
+    </div>
+  </nav>
+  <main class="container">
+    <h2>Seu carrinho</h2>
+    <table class="table">
+      <thead><tr><th></th><th>Produto</th><th>Preço</th><th>Qtd</th><th>Subtotal</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:12px;align-items:center">
+      <strong>Total: <span id="total">R$ 0,00</span></strong>
+      <a class="btn primary" href="checkout.html">Continuar para o Checkout</a>
+    </div>
+  </main>
+</body>
+</html>
